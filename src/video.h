@@ -1,0 +1,10 @@
+#ifndef COMPUTER_NETWORKS_VIDEO_H
+#define COMPUTER_NETWORKS_VIDEO_H
+
+
+class video {
+
+};
+
+
+#endif //COMPUTER_NETWORKS_VIDEO_H

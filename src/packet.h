@@ -1,0 +1,10 @@
+#ifndef COMPUTER_NETWORKS_PACKET_H
+#define COMPUTER_NETWORKS_PACKET_H
+
+
+class packet {
+
+};
+
+
+#endif //COMPUTER_NETWORKS_PACKET_H

@@ -1,0 +1,10 @@
+#ifndef COMPUTER_NETWORKS_DATA_H
+#define COMPUTER_NETWORKS_DATA_H
+
+
+class data {
+
+};
+
+
+#endif //COMPUTER_NETWORKS_DATA_H
