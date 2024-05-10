@@ -6,6 +6,7 @@
 
 #include "src/utils.h"
 #include "src/source.h"
+#include "src/event.h"
 
 
 // TODO transfer below parameters to config and inputs
@@ -13,29 +14,6 @@
 #define NUM_VIDEO_SOURCE 1
 #define NUM_DATA_SOURCE 1
 
-source_parameters a = source_parameters{
-        name: "AUDIO",
-        mean_on_time: 0.36,
-        mean_off_time: 0.64,
-        peak_bit_rate: 64,
-        packet_size: 120
-};
-
-source_parameters v = source_parameters{
-        name: "VIDEO",
-        mean_on_time: 0.27,
-        mean_off_time: 0.73,
-        peak_bit_rate: 384,
-        packet_size: 1000
-};
-
-source_parameters d = source_parameters{
-        name: "DATA",
-        mean_on_time: 0.35,
-        mean_off_time: 0.65,
-        peak_bit_rate: 256,
-        packet_size: 583
-};
 
 #define INIT_SOURCE_STATE OFF
 
@@ -105,17 +83,21 @@ void *source_generator(void *arg) {
 }
 
 
-// Driver Code
+#define SOURCE_EVENTS_LENGTH 100
 
 int main() {
     srand((unsigned) time(NULL));
 
-    create_sources(NUM_AUDIO_SOURCE, &a, NUM_VIDEO_SOURCE, &v, NUM_DATA_SOURCE, &d, source_generator);
-
-    /// ----
-
-    for (int i = 0; i < 20; i++)
-        printf("%f\n", exponential_random(0.35));
+    // prepare events
+    SourceConfig c[] = {
+            SourceConfig{.num=NUM_AUDIO_SOURCE, .t = AUDIO, .mean_on_time = 0.36, .mean_off_time=0.64, .peak_bit_rate = 64, .size=120},
+            SourceConfig{.num=NUM_VIDEO_SOURCE, .t = VIDEO, .mean_on_time = 0.33, .mean_off_time=0.73, .peak_bit_rate = 384, .size=1000},
+            SourceConfig{.num=NUM_DATA_SOURCE, .t = DATA, .mean_on_time = 0.35, .mean_off_time=0.65, .peak_bit_rate = 256, .size=583}
+    };
+    Event *events = prepare_events(c, sizeof(c) / sizeof(c[0]), SOURCE_EVENTS_LENGTH);
+    if (NULL == events) {
+        return 1;
+    }
 
     return EXIT_SUCCESS;
 }

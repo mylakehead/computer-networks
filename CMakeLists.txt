@@ -12,4 +12,6 @@ add_executable(computer_networks main.cpp
         src/packet.h
         src/utils.cpp
         src/utils.h
+        src/event.cpp
+        src/event.h
 )
