@@ -16,6 +16,6 @@ add_executable(computer_networks main.cpp
         src/source.h
         src/packet.cpp
         src/packet.h
-        src/cdf.cpp
-        src/cdf.h
+        src/utils.cpp
+        src/utils.h
 )
