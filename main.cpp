@@ -40,6 +40,9 @@ source_parameters d = source_parameters{
 #define INIT_SOURCE_STATE OFF
 
 int send_packet() {
+    // TODO Feltejae@lakeheadu.ca ctiwari@lakeheadu.ca
+    // we need a packet object, for packet generating
+    // private properties may have: size, type....
     return 0;
 }
 
