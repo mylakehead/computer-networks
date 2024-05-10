@@ -18,22 +18,5 @@ enum source_state {
 int create_sources(int num_audio_source, source_parameters *a, int num_video_source, source_parameters *v,
                    int num_data_source, source_parameters *d, void *f(void *arg));
 
-class source {
-private:
-    unsigned int peak_bit_rate; // kbps
-    unsigned int average_on_time; // sec
-    unsigned int average_off_time; // sec
-    unsigned int packet_size; // bytes
-    bool state; // on or off
-public:
-    source();
-
-    ~source();
-
-    void on();
-
-    void off();
-};
-
 
 #endif //COMPUTER_NETWORKS_SOURCE_H

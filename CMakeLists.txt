@@ -6,12 +6,6 @@ set(CMAKE_CXX_STANDARD 20)
 add_executable(computer_networks main.cpp
         src/fifo.cpp
         src/fifo.h
-        src/audio.cpp
-        src/audio.h
-        src/data.cpp
-        src/data.h
-        src/video.cpp
-        src/video.h
         src/source.cpp
         src/source.h
         src/packet.cpp
