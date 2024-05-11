@@ -10,7 +10,7 @@
 
 
 // TODO transfer below parameters to config and inputs
-#define NUM_AUDIO_SOURCE 2
+#define NUM_AUDIO_SOURCE 1
 #define NUM_VIDEO_SOURCE 1
 #define NUM_DATA_SOURCE 1
 
@@ -83,7 +83,7 @@ void *source_generator(void *arg) {
 }
 
 
-#define SOURCE_EVENTS_LENGTH 100
+#define SOURCE_EVENTS_LENGTH 1000
 
 int main() {
     srand((unsigned) time(NULL));
@@ -97,6 +97,10 @@ int main() {
     Event *events = prepare_events(c, sizeof(c) / sizeof(c[0]), SOURCE_EVENTS_LENGTH);
     if (NULL == events) {
         return 1;
+    }
+
+    for (int j = 0; j < SOURCE_EVENTS_LENGTH; j++) {
+        printf("merge line, event: %d, clock: %f, type: %i\n", j + 1, events[j].clock, events[j].packet.t);
     }
 
     return EXIT_SUCCESS;

@@ -2,7 +2,7 @@
 #define COMPUTER_NETWORKS_EVENT_H
 
 enum PacketType {
-    AUDIO,
+    AUDIO = 1,
     VIDEO,
     DATA
 };
@@ -11,21 +11,9 @@ struct Packet {
     PacketType t;
 };
 
-const Packet AudioPacket = {
-        .t = AUDIO,
-};
-
-const Packet VideoPacket = {
-        .t = VIDEO,
-};
-
-const Packet DataPacket = {
-        .t = DATA,
-};
-
 struct Event {
     double clock;
-    Packet *packet;
+    Packet packet;
 };
 
 struct SourceConfig {
@@ -35,11 +23,6 @@ struct SourceConfig {
     double mean_off_time;
     double peak_bit_rate;
     int size;
-};
-
-struct EventsConfig {
-    int sourceNum;
-    SourceConfig *sc;
 };
 
 Event *prepare_events(SourceConfig c[], int size, int total);

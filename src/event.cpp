@@ -15,22 +15,7 @@ enum source_state {
 };
 
 void place_event(Event *events, int i, PacketType t, double clock) {
-    Packet p;
-    switch (t) {
-        case AUDIO:
-            p = Packet{.t=AUDIO};
-            break;
-        case VIDEO:
-            p = Packet{.t=VIDEO};
-            break;
-        case DATA:
-            p = Packet{.t=DATA};
-            break;
-        default:
-            printf("???");
-    }
-
-    events[i].packet = &p;
+    events[i].packet = Packet{.t=t};
     events[i].clock = clock;
 }
 
@@ -94,7 +79,7 @@ Event *prepare_events(SourceConfig c[], int size, int total) {
     for (int i = 0; i < line_num; i++) {
         for (int j = 0; j < total; j++) {
             printf("line: %d, event: %d, clock: %f, type: %d\n", i + 1, j + 1, lines[i][j].clock,
-                   lines[i][j].packet->t);
+                   lines[i][j].packet.t);
         }
     }
     */
@@ -122,24 +107,6 @@ Event *prepare_events(SourceConfig c[], int size, int total) {
         merge_line[n] = lines[which_line][line_index[which_line]];
         n++;
         line_index[which_line] += 1;
-    }
-
-    for (int j = 0; j < total; j++) {
-        char *t = (char *) malloc(256);
-        switch (merge_line[j].packet->t) {
-            case AUDIO:
-                strcpy(t, "AUDIO");
-                break;
-            case VIDEO:
-                strcpy(t, "VIDEO");
-                break;
-            case DATA:
-                strcpy(t, "DATA");
-                break;
-            default:
-                printf("----\n");
-        }
-        printf("merge line, event: %d, clock: %f, type: %s\n", j + 1, merge_line[j].clock, t);
     }
 
     return merge_line;
