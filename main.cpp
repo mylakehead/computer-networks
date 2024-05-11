@@ -1,11 +1,6 @@
 #include <iostream>
-#include <stdio.h>
-#include <stdlib.h>
-#include <unistd.h>
+#include <cstdlib>
 
-
-#include "src/utils.h"
-#include "src/source.h"
 #include "src/event.h"
 
 
@@ -15,93 +10,29 @@
 #define NUM_DATA_SOURCE 1
 
 
-#define INIT_SOURCE_STATE OFF
-
-int send_packet() {
-    // TODO Feltejae@lakeheadu.ca ctiwari@lakeheadu.ca
-    // we need a packet object, for packet generating
-    // private properties may have: size, type....
-    return 0;
-}
-
-void *source_generator(void *arg) {
-    source_parameters *p = (source_parameters *) arg;
-
-    int peak_packets_per_sec = (int) (p->peak_bit_rate * 1000 / 8 / p->packet_size);
-
-    printf("%s source generator running, mean_on_time: %f, mean_off_time: %f, peak_bit_rate, %f, packet_size: %d, peak_packets_per_sec: %d.\n",
-           p->name,
-           p->mean_on_time,
-           p->mean_off_time,
-           p->peak_bit_rate,
-           p->packet_size,
-           peak_packets_per_sec
-    );
-
-    source_state state = INIT_SOURCE_STATE;
-
-    while (true) {
-        if (state == OFF) {
-            // TODO
-            // why * 100? just make it bigger, simulate ms
-            int next_on = (int) (exponential_random(p->mean_on_time) * 100);
-            printf("%s source generator is on state \"OFF\", will sleep %d ms.\n", p->name, next_on);
-            // milliseconds to microseconds
-            usleep(next_on * 1000);
-            state = ON;
-            continue;
-        } else {
-            printf("%s source generator is on state \"ON\", sending packet %d.\n", p->name, 1);
-            // since we are on, send one first
-            // TODO handle ack
-            int ack = send_packet();
-            // calculate how many packets left
-            int next_off = (int) (exponential_random(p->mean_off_time) * 100);
-            int packets_to_send = peak_packets_per_sec * next_off / 1000;
-            if (packets_to_send == 0) {
-                printf("%s source generator is on state \"ON\", no more packet to send, will sleep %d ms.\n",
-                       p->name,
-                       next_off);
-                // still need to sleep
-                usleep(next_off * 1000);
-            } else {
-                printf("%s source generator is on state \"ON\", %d packets left to send.\n", p->name, packets_to_send);
-                int packet_interval = next_off / packets_to_send;
-                for (int i = 0; i < packets_to_send; i++) {
-                    printf("%s source generator is on state \"ON\", sending packet %d.\n", p->name, i + 2);
-                    ack = send_packet();
-                    // milliseconds to microseconds
-                    usleep(packet_interval * 1000);
-                }
-            }
-            state = OFF;
-            continue;
-        }
-    }
-
-    pthread_exit(0);
-}
-
-
 #define SOURCE_EVENTS_LENGTH 1000
 
+
 int main() {
-    srand((unsigned) time(NULL));
+    srand(time(nullptr));
 
     // prepare events
+    printf("preparing events...\n");
     SourceConfig c[] = {
             SourceConfig{.num=NUM_AUDIO_SOURCE, .t = AUDIO, .mean_on_time = 0.36, .mean_off_time=0.64, .peak_bit_rate = 64, .size=120},
             SourceConfig{.num=NUM_VIDEO_SOURCE, .t = VIDEO, .mean_on_time = 0.33, .mean_off_time=0.73, .peak_bit_rate = 384, .size=1000},
             SourceConfig{.num=NUM_DATA_SOURCE, .t = DATA, .mean_on_time = 0.35, .mean_off_time=0.65, .peak_bit_rate = 256, .size=583}
     };
     Event *events = prepare_events(c, sizeof(c) / sizeof(c[0]), SOURCE_EVENTS_LENGTH);
-    if (NULL == events) {
+    if (nullptr == events) {
         return 1;
     }
-
+    /*
     for (int j = 0; j < SOURCE_EVENTS_LENGTH; j++) {
         printf("merge line, event: %d, clock: %f, type: %i\n", j + 1, events[j].clock, events[j].packet.t);
     }
+     */
+    printf("%d events prepared.\n", SOURCE_EVENTS_LENGTH);
 
     return EXIT_SUCCESS;
 }
