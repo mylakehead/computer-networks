@@ -1,6 +1,6 @@
 /* External definitions for single-server queueing system. */
 
-#include <stdio.h>  
+#include <stdio.h>
 #include <math.h>
 #include "lcgrand.h"  /* Header file for random-number generator. */
 
@@ -8,19 +8,25 @@
 #define BUSY      1  /* Mnemonics for server's being busy */
 #define IDLE      0  /* and idle. */
 
-int   next_event_type, num_custs_delayed, num_delays_required, num_events,
-      num_in_q, server_status;
+int next_event_type, num_custs_delayed, num_delays_required, num_events,
+        num_in_q, server_status;
 float area_num_in_q, area_server_status, mean_interarrival, mean_service,
-      sim_time, time_arrival[Q_LIMIT + 1], time_last_event, time_next_event[3],
-      total_of_delays;
-FILE  *infile, *outfile;
+        sim_time, time_arrival[Q_LIMIT + 1], time_last_event, time_next_event[3],
+        total_of_delays;
+FILE *infile, *outfile;
 
-void  initialize(void);
-void  timing(void);
-void  arrive(void);
-void  depart(void);
-void  report(void);
-void  update_time_avg_stats(void);
+void initialize(void);
+
+void timing(void);
+
+void arrive(void);
+
+void depart(void);
+
+void report(void);
+
+void update_time_avg_stats(void);
+
 float expon(float mean);
 
 
@@ -28,7 +34,7 @@ main()  /* Main function. */
 {
     /* Open input and output files. */
 
-    infile  = fopen("mm1.in",  "r");
+    infile = fopen("mm1.in", "r");
     outfile = fopen("mm1.out", "w");
 
     /* Specify the number of events for the timing function. */
@@ -46,7 +52,7 @@ main()  /* Main function. */
     fprintf(outfile, "Mean interarrival time%11.3f minutes\n\n",
             mean_interarrival);
     fprintf(outfile, "Mean service time%16.3f minutes\n\n", mean_service);
-    fprintf(outfile, "Number of customers%14d\n\n", num_delays_required);
+    fprintf(outfile, "Number of customers%14d\n\n", num_events);
 
     /* Initialize the simulation. */
 
@@ -54,8 +60,7 @@ main()  /* Main function. */
 
     /* Run the simulation while more delays are still needed. */
 
-    while (num_custs_delayed < num_delays_required)     
-    {
+    while (num_custs_delayed < num_delays_required) {
         /* Determine the next event. */
 
         timing();
@@ -66,8 +71,7 @@ main()  /* Main function. */
 
         /* Invoke the appropriate event function. */
 
-        switch (next_event_type) 
-        {
+        switch (next_event_type) {
             case 1:
                 arrive();
                 break;
@@ -96,15 +100,15 @@ void initialize(void)  /* Initialization function. */
 
     /* Initialize the state variables. */
 
-    server_status   = IDLE;
-    num_in_q        = 0;
+    server_status = IDLE;
+    num_in_q = 0;
     time_last_event = 0.0;
 
     /* Initialize the statistical counters. */
 
-    num_custs_delayed  = 0;
-    total_of_delays    = 0.0;
-    area_num_in_q      = 0.0;
+    num_custs_delayed = 0;
+    total_of_delays = 0.0;
+    area_num_in_q = 0.0;
     area_server_status = 0.0;
 
     /* Initialize event list.  Since no customers are present, the departure
@@ -117,7 +121,7 @@ void initialize(void)  /* Initialization function. */
 
 void timing(void)  /* Timing function. */
 {
-    int   i;
+    int i;
     float min_time_next_event = 1.0e+29;
 
     next_event_type = 0;
@@ -125,16 +129,14 @@ void timing(void)  /* Timing function. */
     /* Determine the event type of the next event to occur. */
 
     for (i = 1; i <= num_events; ++i)
-        if (time_next_event[i] < min_time_next_event)
-        {   
+        if (time_next_event[i] < min_time_next_event) {
             min_time_next_event = time_next_event[i];
-            next_event_type     = i;
+            next_event_type = i;
         }
 
     /* Check to see whether the event list is empty. */
 
-    if (next_event_type == 0)
-    {
+    if (next_event_type == 0) {
         /* The event list is empty, so stop the simulation. */
 
         fprintf(outfile, "\nEvent list empty at time %f", sim_time);
@@ -149,13 +151,13 @@ void timing(void)  /* Timing function. */
 
 void arrive(void)  /* Arrival event function. */
 {
-  // to be completed by students
+    // to be completed by students
 }
 
 
 void depart(void)  /* Departure event function. */
 {
-  // to be completed by studnts
+    // to be completed by studnts
 }
 
 
@@ -175,11 +177,11 @@ void update_time_avg_stats(void)  /* Update area accumulators for time-average
     /* Compute time since last event, and update last-event-time marker. */
 
     time_since_last_event = sim_time - time_last_event;
-    time_last_event       = sim_time;
+    time_last_event = sim_time;
 
     /* Update area under number-in-queue function. */
 
-    area_num_in_q      += num_in_q * time_since_last_event;
+    area_num_in_q += num_in_q * time_since_last_event;
 
     /* Update area under server-busy indicator function. */
 

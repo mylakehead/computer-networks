@@ -12,16 +12,16 @@ struct Packet {
 };
 
 struct Event {
-    double clock;
+    float clock;
     Packet packet;
 };
 
 struct SourceConfig {
     int num; // number of this kind of source
     PacketType t;
-    double mean_on_time;
-    double mean_off_time;
-    double peak_bit_rate;
+    float mean_on_time;
+    float mean_off_time;
+    float peak_bit_rate;
     int size;
 };
 

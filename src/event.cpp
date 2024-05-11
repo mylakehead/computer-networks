@@ -14,7 +14,7 @@ enum source_state {
     OFF
 };
 
-void place_event(Event *events, int i, PacketType t, double clock) {
+void place_event(Event *events, int i, PacketType t, float clock) {
     events[i].packet = Packet{.t=t};
     events[i].clock = clock;
 }
@@ -24,22 +24,22 @@ void fill(Event *events, int length, SourceConfig *c) {
 
     int peak_packets_per_sec = (int) (c->peak_bit_rate * 1000 / 8 / c->size);
 
-    double clock = 0.0;
+    float clock = 0.0;
     int i = 0;
 
     while (i < length) {
         if (state == OFF) {
-            double next_on = exponential_random(c->mean_on_time);
+            float next_on = exponential_random(c->mean_on_time);
             clock += next_on;
             state = ON;
             continue;
         } else {
             // TODO if edge cases want to be handled, do here
-            double next_off = exponential_random(c->mean_off_time);
-            double on_end = clock + next_off;
+            float next_off = exponential_random(c->mean_off_time);
+            float on_end = clock + next_off;
 
             int packets_to_send = (int) (peak_packets_per_sec * next_off);
-            double packet_interval = 1.0 / peak_packets_per_sec;
+            float packet_interval = 1.0 / peak_packets_per_sec;
             do {
                 place_event(events, i, c->t, clock);
                 i++;
@@ -96,7 +96,7 @@ Event *prepare_events(SourceConfig c[], int size, int total) {
     }
     int n = 0;
     while (n < total) {
-        double min_clock = 1.0e+30;
+        float min_clock = 1.0e+30;
         int which_line = 0;
         for (int i = 0; i < line_num; i++) {
             if (lines[i][line_index[i]].clock < min_clock) {
