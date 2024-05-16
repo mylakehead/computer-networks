@@ -4,12 +4,12 @@ project(computer_networks)
 set(CMAKE_CXX_STANDARD 20)
 
 add_executable(computer_networks main.cpp
-        src/fifo.cpp
-        src/fifo.h
-        src/packet.cpp
-        src/packet.h
         src/utils.cpp
         src/utils.h
         src/event.cpp
         src/event.h
+        include/tomlcpp.cpp
+        include/toml.c
+        src/config.cpp
+        src/config.h
 )

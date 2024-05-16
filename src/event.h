@@ -13,6 +13,7 @@ struct Packet {
 
 struct Event {
     float clock;
+    float cost;
     Packet packet;
 };
 
@@ -25,6 +26,6 @@ struct SourceConfig {
     int size;
 };
 
-Event *prepare_events(SourceConfig c[], int size, int total);
+Event *prepare_events(SourceConfig c[], int size, float server_rate, int total);
 
 #endif //COMPUTER_NETWORKS_EVENT_H

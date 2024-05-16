@@ -1,17 +1,27 @@
 #include <iostream>
 #include <cstdlib>
 #include <queue>
+#include <unistd.h>
+#include <stdio.h>
 
 #include "src/event.h"
+#include "src/config.h"
+#include "src/utils.h"
 
+struct Runtime {
+    Config *config;
+
+    Event *arrival_event;
+    float clock_next_departure;
+
+    std::queue<Event *> q_arrival;
+};
 
 #define NUM_AUDIO_SOURCE 1
 #define NUM_VIDEO_SOURCE 1
 #define NUM_DATA_SOURCE 1
 
-#define SOURCE_EVENTS_LENGTH 1000000
-
-#define Q_SIZE 100
+#define SOURCE_EVENTS_LENGTH 100
 
 enum ServerStatus {
     IDLE = 0,
@@ -25,11 +35,7 @@ enum EventType {
 
 float clock_system, clock_last_event;
 ServerStatus server_status;
-std::queue<Event *> q_arrival;
-std::queue<Event *> q_departure;
-
 int event_index;
-Event *arrival_event;
 
 int num_delayed;
 float total_of_delays, area_num_in_q, area_server_status;
@@ -37,7 +43,12 @@ float total_of_delays, area_num_in_q, area_server_status;
 EventType next_event_type;
 
 // snapshot of the system at clock 0
-void initialize(Event *events) {
+void initialize(Runtime *runtime, Event *events) {
+    runtime->clock_next_departure = 1.0e+30;
+    // event source
+    event_index = 0;
+    runtime->arrival_event = &events[event_index];
+
     /* system state */
     // simulator clock
     clock_system = 0.0;
@@ -46,12 +57,6 @@ void initialize(Event *events) {
     // time of last event
     clock_last_event = 0.0;
 
-    // event source
-    event_index = 0;
-    arrival_event = &events[event_index];
-    // index move to next event
-    event_index++;
-
     // statistical counters
     num_delayed = 0;
     total_of_delays = 0.0;
@@ -59,133 +64,101 @@ void initialize(Event *events) {
     area_server_status = 0.0;
 }
 
-void step(Event *events) {
-    // decide next event type
-    if (0 == q_departure.size()) {
-        next_event_type = ARRIVAL;
-    } else {
-        Event *departure_head = q_departure.front();
-        if (arrival_event->clock < departure_head->clock) {
-            next_event_type = ARRIVAL;
-        } else {
-            next_event_type = DEPARTURE;
-        }
-    }
-
-    printf("%d\n", event_index);
-}
-
-
 void update_time_avg_stats(void) {
 }
 
-void arrive(Event *events) {
+void arrive(Runtime *runtime) {
+    clock_system = runtime->arrival_event->clock;
+
     if (IDLE == server_status) {
-        clock_system = arrival_event->clock;
-        // update arrival event
-        arrival_event = &events[event_index];
-        event_index++;
-
-        // create a departure event
-        Event *departure_event = (Event *) malloc(sizeof(Event));
-        memset(events, 0, sizeof(Event));
-        // TODO simulate depart interval according to packet type
-        departure_event->clock = arrival_event->clock + 0.2;
-        departure_event->packet = arrival_event->packet;
-        q_departure.push(departure_event);
-
+        // since no Event in Q, this Event can be handled immediately
+        // and departure clock can be calculated
+        runtime->clock_next_departure = cal_departure_clock(clock_system, runtime->arrival_event->cost);
         // since server is IDLE, this event will be served without pushing in q_arrival, update num delayed
         num_delayed += 1;
-        total_of_delays += 0.0;
-        // calculate area_num_in_q
-        float clock_between_last_event = clock_system - clock_last_event;
-        area_num_in_q += clock_between_last_event * q_arrival.size();
-        // calculate area server status
-        area_server_status += int(server_status) * clock_between_last_event;
-
-        // update last event
-        clock_last_event = clock_system;
         // update server status
         server_status = BUSY;
-        // number in q_arrival no changes
-        // q_arrival no changes
     } else {
-        clock_system = arrival_event->clock;
-        // update arrival event
-        arrival_event = &events[event_index];
-        event_index++;
-
-        // no event served, num delayed no change
-        num_delayed += 0;
-        // total delays no change
-        total_of_delays += 0.0;
-        // calculate area_num_in_q
-        float clock_between_last_event = clock_system - clock_last_event;
-        area_num_in_q += clock_between_last_event * q_arrival.size();
-        // calculate area server status
-        area_server_status += int(server_status) * clock_between_last_event;
-
-        // update last event
-        clock_last_event = clock_system;
         // server keep busy
         // update q_arrival
-        if (q_arrival.size() >= Q_SIZE) {
-            // TODO drop event
+        if (runtime->q_arrival.size() >= runtime->config->fifo.size) {
+            printf("event dropped\n");
         } else {
-            // create a departure event
-            Event *departure_event = (Event *) malloc(sizeof(Event));
-            memset(events, 0, sizeof(Event));
-            // TODO simulate depart interval according to packet type
-            departure_event->clock = arrival_event->clock + 0.2;
-            departure_event->packet = arrival_event->packet;
-            q_departure.push(departure_event);
-
-            q_arrival.push(arrival_event);
+            runtime->q_arrival.push(runtime->arrival_event);
         }
     }
-}
-
-
-void depart(void) {
-    Event *departure_head = q_departure.front();
-
-    clock_system = departure_head->clock;
-
-    // move out event from q_arrival
-    Event *arrival_head = q_arrival.front();
 
     // calculate area_num_in_q
     float clock_between_last_event = clock_system - clock_last_event;
-    area_num_in_q += clock_between_last_event * q_arrival.size();
+    area_num_in_q += clock_between_last_event * runtime->q_arrival.size();
+    // calculate area server status
+    area_server_status += int(server_status) * clock_between_last_event;
+    // update last event
+    clock_last_event = clock_system;
+}
+
+void depart(Runtime *runtime) {
+    clock_system = runtime->clock_next_departure;
+
+    // calculate area_num_in_q
+    float clock_between_last_event = clock_system - clock_last_event;
+    area_num_in_q += clock_between_last_event * runtime->q_arrival.size();
     // calculate area server status
     area_server_status += int(server_status) * clock_between_last_event;
 
     // update last event
     clock_last_event = clock_system;
 
-    q_departure.pop();
-
     // delay in q_arrival
-    if (q_arrival.size() > 0) {
+    if (runtime->q_arrival.size() > 0) {
+        // move out event from q_arrival
+        Event *arrival_head = runtime->q_arrival.front();
         num_delayed += 1;
         float event_delay = clock_system - arrival_head->clock;
         total_of_delays += event_delay;
-        q_arrival.pop();
+        runtime->clock_next_departure = cal_departure_clock(clock_system, arrival_head->cost);
+        runtime->q_arrival.pop();
     } else {
-        if (0 == q_departure.size()) {
-            server_status = IDLE;
-        }
+        runtime->clock_next_departure = 1.0e+30;
+        server_status = IDLE;
     }
 }
 
 
 void report(void) {
-    printf("num_delayed: %d, total_of_delays: %f, area_num_in_q: %f, area_server_status: %f ", num_delayed,
+    printf("num_delayed: %d, total_of_delays: %f, area_num_in_q: %f, area_server_status: %f \n", num_delayed,
            total_of_delays, area_num_in_q, area_server_status);
 }
 
-int main() {
-    // TODO another source
+
+int main(int argc, char *argv[]) {
+    Runtime runtime;
+
+    // get command line arguments
+    char *config_file = nullptr;
+    int ch;
+    while ((ch = getopt(argc, argv, "c:")) != -1) {
+        switch (ch) {
+            case 'c':
+                config_file = optarg;
+                break;
+        }
+    }
+    if (nullptr == config_file || strlen(config_file) <= 0) {
+        return EXIT_FAILURE;
+    }
+
+    // parse config file
+    printf("parse config file: <%s>\n", config_file);
+    Config config;
+    int r = parse_config_file(config_file, &config);
+    if (0 != r) {
+        printf("parse config file failed: <%s>\n", config_file);
+        return EXIT_FAILURE;
+    }
+    printf("parse config file successfully\n");
+    runtime.config = &config;
+
     srand(time(nullptr));
 
     // prepare events
@@ -195,7 +168,7 @@ int main() {
             SourceConfig{.num=NUM_VIDEO_SOURCE, .t = VIDEO, .mean_on_time = 0.33, .mean_off_time=0.73, .peak_bit_rate = 384, .size=1000},
             SourceConfig{.num=NUM_DATA_SOURCE, .t = DATA, .mean_on_time = 0.35, .mean_off_time=0.65, .peak_bit_rate = 256, .size=583}
     };
-    Event *events = prepare_events(c, sizeof(c) / sizeof(c[0]), SOURCE_EVENTS_LENGTH);
+    Event *events = prepare_events(c, sizeof(c) / sizeof(c[0]), config.server.rate, SOURCE_EVENTS_LENGTH);
     if (nullptr == events) {
         return 1;
     }
@@ -206,25 +179,47 @@ int main() {
      */
     printf("%d events prepared.\n", SOURCE_EVENTS_LENGTH);
 
-    initialize(events);
+    // prepare arrival q
+    switch (config.queue_type) {
+        case FIFO:
+            if (config.fifo.size >= 9223372036854775807) {
+                printf("integrating FIFO with infinite size\n");
+            } else {
+                printf("integrating FIFO with size: %ld\n", config.fifo.size);
+            }
+            break;
+        case SPQ:
+            printf("unimplemented\n");
+            return EXIT_FAILURE;
+            break;
+        case WFQ:
+            printf("unimplemented\n");
+            return EXIT_FAILURE;
+            break;
+    }
 
-    /* Run the simulation while more delays are still needed. */
+    initialize(&runtime, events);
 
     while (event_index < SOURCE_EVENTS_LENGTH) {
-        step(events);
+        // decide next event type
+        if (runtime.arrival_event->clock < runtime.clock_next_departure) {
+            next_event_type = ARRIVAL;
+        } else {
+            next_event_type = DEPARTURE;
+        }
 
-        /* Update time-average statistical accumulators. */
+        printf("%d\n", event_index);
 
         update_time_avg_stats();
 
-        /* Invoke the appropriate event function. */
-
         switch (next_event_type) {
             case ARRIVAL:
-                arrive(events);
+                arrive(&runtime);
+                event_index++;
+                runtime.arrival_event = &events[event_index];
                 break;
             case DEPARTURE:
-                depart();
+                depart(&runtime);
                 break;
         }
     }

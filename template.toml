@@ -1,0 +1,9 @@
+[queue]
+activate = "FIFO" # FIFO, SPQ, WFQ
+[queue.FIFO]
+size = 9223372036854775807 # K, maximum long long: 9223372036854775807
+
+
+[server]
+# transmission capacity of the system (Mbits/s)
+rate = 0.001

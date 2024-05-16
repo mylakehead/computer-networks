@@ -1,6 +1,0 @@
-#ifndef COMPUTER_NETWORKS_FIFO_H
-#define COMPUTER_NETWORKS_FIFO_H
-
-int test();
-
-#endif //COMPUTER_NETWORKS_FIFO_H

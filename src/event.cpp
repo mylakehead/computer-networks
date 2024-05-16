@@ -14,18 +14,20 @@ enum source_state {
     OFF
 };
 
-void place_event(Event *events, int i, PacketType t, float clock) {
+void place_event(Event *events, int i, PacketType t, float clock, float cost) {
     events[i].packet = Packet{.t=t};
     events[i].clock = clock;
+    events[i].cost = cost;
 }
 
-void fill(Event *events, int length, SourceConfig *c) {
+void fill(Event *events, int length, float server_rate, SourceConfig *c) {
     source_state state = INIT_SOURCE_STATE;
 
     int peak_packets_per_sec = (int) (c->peak_bit_rate * 1000 / 8 / c->size);
 
     float clock = 0.0;
     int i = 0;
+    float cost = c->size / server_rate;
 
     while (i < length) {
         if (state == OFF) {
@@ -41,7 +43,7 @@ void fill(Event *events, int length, SourceConfig *c) {
             int packets_to_send = (int) (peak_packets_per_sec * next_off);
             float packet_interval = 1.0 / peak_packets_per_sec;
             do {
-                place_event(events, i, c->t, clock);
+                place_event(events, i, c->t, clock, cost);
                 i++;
                 clock += packet_interval;
                 packets_to_send--;
@@ -50,7 +52,7 @@ void fill(Event *events, int length, SourceConfig *c) {
     }
 }
 
-Event *prepare_events(SourceConfig c[], int size, int total) {
+Event *prepare_events(SourceConfig c[], int size, float server_rate, int total) {
     int line_num = 0;
     for (int i = 0; i < size; i++) {
         line_num += c[i].num;
@@ -69,7 +71,7 @@ Event *prepare_events(SourceConfig c[], int size, int total) {
             lines[m] = events;
 
             // fill events
-            fill(events, total, &c[i]);
+            fill(events, total, server_rate, &c[i]);
 
             m++;
         }
