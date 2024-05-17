@@ -17,12 +17,6 @@ struct Runtime {
     std::queue<Event *> q_arrival;
 };
 
-#define NUM_AUDIO_SOURCE 1
-#define NUM_VIDEO_SOURCE 1
-#define NUM_DATA_SOURCE 1
-
-#define SOURCE_EVENTS_LENGTH 100
-
 enum ServerStatus {
     IDLE = 0,
     BUSY = 1
@@ -163,12 +157,7 @@ int main(int argc, char *argv[]) {
 
     // prepare events
     printf("preparing events...\n");
-    SourceConfig c[] = {
-            SourceConfig{.num=NUM_AUDIO_SOURCE, .t = AUDIO, .mean_on_time = 0.36, .mean_off_time=0.64, .peak_bit_rate = 64, .size=120},
-            SourceConfig{.num=NUM_VIDEO_SOURCE, .t = VIDEO, .mean_on_time = 0.33, .mean_off_time=0.73, .peak_bit_rate = 384, .size=1000},
-            SourceConfig{.num=NUM_DATA_SOURCE, .t = DATA, .mean_on_time = 0.35, .mean_off_time=0.65, .peak_bit_rate = 256, .size=583}
-    };
-    Event *events = prepare_events(c, sizeof(c) / sizeof(c[0]), config.server.rate, SOURCE_EVENTS_LENGTH);
+    Event *events = prepare_events(&config);
     if (nullptr == events) {
         return 1;
     }
@@ -177,7 +166,7 @@ int main(int argc, char *argv[]) {
         printf("merge line, event: %d, clock: %f, type: %i\n", j + 1, events[j].clock, events[j].packet.t);
     }
      */
-    printf("%d events prepared.\n", SOURCE_EVENTS_LENGTH);
+    printf("%d events prepared.\n", config.source.event_count);
 
     // prepare arrival q
     switch (config.queue_type) {
@@ -200,7 +189,7 @@ int main(int argc, char *argv[]) {
 
     initialize(&runtime, events);
 
-    while (event_index < SOURCE_EVENTS_LENGTH) {
+    while (event_index < config.source.event_count) {
         // decide next event type
         if (runtime.arrival_event->clock < runtime.clock_next_departure) {
             next_event_type = ARRIVAL;

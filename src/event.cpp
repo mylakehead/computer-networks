@@ -1,6 +1,7 @@
 #include <cstdlib>
 #include <cstring>
 #include <cstdio>
+#include <vector>
 
 #include "event.h"
 #include "utils.h"
@@ -20,30 +21,30 @@ void place_event(Event *events, int i, PacketType t, float clock, float cost) {
     events[i].cost = cost;
 }
 
-void fill(Event *events, int length, float server_rate, SourceConfig *c) {
+void fill(Event *events, int length, float server_rate, Flow *f) {
     source_state state = INIT_SOURCE_STATE;
 
-    int peak_packets_per_sec = (int) (c->peak_bit_rate * 1000 / 8 / c->size);
+    int peak_packets_per_sec = (int) (f->peak_bit_rate * 1000 / 8 / f->packet_size);
 
     float clock = 0.0;
     int i = 0;
-    float cost = c->size / server_rate;
+    float cost = f->packet_size / server_rate;
 
     while (i < length) {
         if (state == OFF) {
-            float next_on = exponential_random(c->mean_on_time);
+            float next_on = exponential_random(f->mean_on_time);
             clock += next_on;
             state = ON;
             continue;
         } else {
             // TODO if edge cases want to be handled, do here
-            float next_off = exponential_random(c->mean_off_time);
+            float next_off = exponential_random(f->mean_off_time);
             float on_end = clock + next_off;
 
             int packets_to_send = (int) (peak_packets_per_sec * next_off);
             float packet_interval = 1.0 / peak_packets_per_sec;
             do {
-                place_event(events, i, c->t, clock, cost);
+                place_event(events, i, f->t, clock, cost);
                 i++;
                 clock += packet_interval;
                 packets_to_send--;
@@ -52,18 +53,18 @@ void fill(Event *events, int length, float server_rate, SourceConfig *c) {
     }
 }
 
-Event *prepare_events(SourceConfig c[], int size, float server_rate, int total) {
+Event *prepare_events(Config *config) {
     int line_num = 0;
-    for (int i = 0; i < size; i++) {
-        line_num += c[i].num;
+    for (int i = 0; i < config->source.flows.size(); i++) {
+        line_num += config->source.flows[i].streams;
     }
     Event *lines[line_num];
 
     int m = 0;
-    for (int i = 0; i < size; i++) {
-        for (int n = 0; n < c[i].num; n++) {
-            Event *events = (Event *) malloc(total * sizeof(Event));
-            memset(events, 0, total * sizeof(Event));
+    for (int i = 0; i < config->source.flows.size(); i++) {
+        for (int n = 0; n < config->source.flows[i].streams; n++) {
+            Event *events = (Event *) malloc(config->source.event_count * sizeof(Event));
+            memset(events, 0, config->source.event_count * sizeof(Event));
             if (!events)
                 return NULL;
 
@@ -71,7 +72,7 @@ Event *prepare_events(SourceConfig c[], int size, float server_rate, int total) 
             lines[m] = events;
 
             // fill events
-            fill(events, total, server_rate, &c[i]);
+            fill(events, config->source.event_count, config->server.rate, &(config->source.flows[i]));
 
             m++;
         }
@@ -86,8 +87,8 @@ Event *prepare_events(SourceConfig c[], int size, float server_rate, int total) 
     }
     */
 
-    Event *merge_line = (Event *) malloc(total * sizeof(Event));
-    memset(merge_line, 0, total * sizeof(merge_line));
+    Event *merge_line = (Event *) malloc(config->source.event_count * sizeof(Event));
+    memset(merge_line, 0, config->source.event_count * sizeof(merge_line));
     if (!merge_line)
         return NULL;
 
@@ -97,7 +98,7 @@ Event *prepare_events(SourceConfig c[], int size, float server_rate, int total) 
         line_index[i] = 0;
     }
     int n = 0;
-    while (n < total) {
+    while (n < config->source.event_count) {
         float min_clock = 1.0e+30;
         int which_line = 0;
         for (int i = 0; i < line_num; i++) {

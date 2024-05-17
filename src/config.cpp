@@ -59,8 +59,96 @@ int parse_config_file(char *config_file, Config *config) {
         printf("parsing file error: %s\n", "missing or bad [server.rate] entry");
         return 1;
     }
-    config->server.rate = (float) (rate.second) * 1000 * 1000;
+    config->server.rate = (float) (rate.second) * 1000;
 
+    // source
+    auto source = res.table->getTable("source");
+    if (!source) {
+        printf("parsing file error: %s\n", "missing [source]");
+        return 1;
+    }
+
+    std::pair event_count = source->getInt("event_count");
+    if (!event_count.first) {
+        printf("parsing file error: %s\n", "missing or bad [source.event_count] entry");
+        return 1;
+    }
+    config->source.event_count = event_count.second;
+
+    auto flows = source->getArray("flows");
+    if (!flows) {
+        printf("parsing file error: %s\n", "missing or bad [source.flows] entry");
+        return 1;
+    }
+
+    // Little's formula
+    float lambda = 0.0;
+
+    for (int i = 0;; i++) {
+        auto flow_table = flows->getTable(i);
+        if (!flow_table) {
+            break;
+        }
+
+        Flow flow;
+        std::pair flow_type = flow_table->getString("type");
+        if (!flow_type.first) {
+            printf("parsing file error: %s\n", "missing or bad [source.flows.type] entry");
+            return 1;
+        }
+        if (flow_type.second == "AUDIO") {
+            flow.t = AUDIO;
+        } else if (flow_type.second == "VIDEO") {
+            flow.t = VIDEO;
+        } else if (flow_type.second == "DATA") {
+            flow.t = DATA;
+        } else {
+            printf("parsing file error: %s\n", "missing or bad [source.flows.type] entry");
+            return 1;
+        }
+
+        std::pair flow_streams = flow_table->getInt("streams");
+        if (!flow_streams.first) {
+            printf("parsing file error: %s\n", "missing or bad [source.flows.streams] entry");
+            return 1;
+        }
+        flow.streams = flow_streams.second;
+
+        std::pair flow_mean_on_time = flow_table->getDouble("mean_on_time");
+        if (!flow_mean_on_time.first) {
+            printf("parsing file error: %s\n", "missing or bad [source.flows.mean_on_time] entry");
+            return 1;
+        }
+        flow.mean_on_time = (float) flow_mean_on_time.second;
+
+        std::pair flow_mean_off_time = flow_table->getDouble("mean_off_time");
+        if (!flow_mean_off_time.first) {
+            printf("parsing file error: %s\n", "missing or bad [source.flows.mean_off_time] entry");
+            return 1;
+        }
+        flow.mean_off_time = (float) flow_mean_off_time.second;
+
+        std::pair flow_peak_bit_rate = flow_table->getInt("peak_bit_rate");
+        if (!flow_peak_bit_rate.first) {
+            printf("parsing file error: %s\n", "missing or bad [source.flows.peak_bit_rate] entry");
+            return 1;
+        }
+        flow.peak_bit_rate = flow_peak_bit_rate.second;
+
+        std::pair flow_packet_size = flow_table->getInt("packet_size");
+        if (!flow_packet_size.first) {
+            printf("parsing file error: %s\n", "missing or bad [source.flows.packet_size] entry");
+            return 1;
+        }
+        flow.packet_size = flow_packet_size.second;
+
+        lambda += (flow.mean_on_time / (flow.mean_on_time + flow.mean_off_time)) * flow.streams * flow.peak_bit_rate *
+                  1000;
+
+        config->source.flows.push_back(flow);
+    }
+
+    printf("Little's formula, λ = %f\n", lambda);
 
     return 0;
 }

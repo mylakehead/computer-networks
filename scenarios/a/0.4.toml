@@ -5,7 +5,7 @@ size = 100 # K, maximum long long: 9223372036854775807
 
 [server]
 # transmission capacity of the system (kbits/s) (C)
-rate = 1000 # μ for Little's formula
+rate = 638 # μ for Little's formula
 
 [source]
 event_count = 100 # total event count
