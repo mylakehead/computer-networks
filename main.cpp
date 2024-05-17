@@ -189,14 +189,18 @@ int main(int argc, char *argv[]) {
 
     initialize(&runtime, events);
 
-    while (event_index < config.source.event_count) {
+    while (event_index < config.source.event_count || runtime.clock_next_departure < 1.0e+30) {
         // decide next event type
-        if (runtime.arrival_event->clock < runtime.clock_next_departure) {
-            next_event_type = ARRIVAL;
+        if (runtime.arrival_event != nullptr) {
+            if (runtime.arrival_event->clock < runtime.clock_next_departure) {
+                next_event_type = ARRIVAL;
+            } else {
+                next_event_type = DEPARTURE;
+            }
         } else {
             next_event_type = DEPARTURE;
         }
-
+        
         printf("%d\n", event_index);
 
         update_time_avg_stats();
@@ -205,7 +209,11 @@ int main(int argc, char *argv[]) {
             case ARRIVAL:
                 arrive(&runtime);
                 event_index++;
-                runtime.arrival_event = &events[event_index];
+                if (event_index >= config.source.event_count) {
+                    runtime.arrival_event = nullptr;
+                } else {
+                    runtime.arrival_event = &events[event_index];
+                }
                 break;
             case DEPARTURE:
                 depart(&runtime);
