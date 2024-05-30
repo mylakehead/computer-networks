@@ -4,12 +4,14 @@
 #include <unistd.h>
 #include <stdio.h>
 
-#include "src/event.h"
+#include "src/source.h"
 #include "src/config.h"
 #include "src/utils.h"
 
 struct Runtime {
     Config *config;
+
+    State *state;
 
     Event *arrival_event;
     float clock_next_departure;
@@ -29,7 +31,6 @@ enum EventType {
 
 float clock_system, clock_last_event;
 ServerStatus server_status;
-int event_index;
 
 int num_delayed;
 float total_of_delays, area_num_in_q, area_server_status;
@@ -37,11 +38,10 @@ float total_of_delays, area_num_in_q, area_server_status;
 EventType next_event_type;
 
 // snapshot of the system at clock 0
-void initialize(Runtime *runtime, Event *events) {
+void initialize(Runtime *runtime) {
     runtime->clock_next_departure = 1.0e+30;
-    // event source
-    event_index = 0;
-    runtime->arrival_event = &events[event_index];
+
+    runtime->arrival_event = next_arrival(runtime->config, runtime->state);
 
     /* system state */
     // simulator clock
@@ -56,9 +56,6 @@ void initialize(Runtime *runtime, Event *events) {
     total_of_delays = 0.0;
     area_num_in_q = 0.0;
     area_server_status = 0.0;
-}
-
-void update_time_avg_stats(void) {
 }
 
 void arrive(Runtime *runtime) {
@@ -153,20 +150,13 @@ int main(int argc, char *argv[]) {
     printf("parse config file successfully\n");
     runtime.config = &config;
 
+    State state;
+    runtime.state = &state;
+
     srand(time(nullptr));
 
-    // prepare events
-    printf("preparing events...\n");
-    Event *events = prepare_events(&config);
-    if (nullptr == events) {
-        return 1;
-    }
-    /*
-    for (int j = 0; j < SOURCE_EVENTS_LENGTH; j++) {
-        printf("merge line, event: %d, clock: %f, type: %i\n", j + 1, events[j].clock, events[j].packet.t);
-    }
-     */
-    printf("%d events prepared.\n", config.source.event_count);
+    // init source state
+    init_source_state(runtime.config, runtime.state);
 
     // prepare arrival q
     switch (config.queue_type) {
@@ -187,41 +177,35 @@ int main(int argc, char *argv[]) {
             break;
     }
 
-    initialize(&runtime, events);
+    initialize(&runtime);
 
-    while (event_index < config.source.event_count || runtime.clock_next_departure < 1.0e+30) {
+    while (true) {
         // decide next event type
-        if (runtime.arrival_event != nullptr) {
-            if (runtime.arrival_event->clock < runtime.clock_next_departure) {
-                next_event_type = ARRIVAL;
-            } else {
-                next_event_type = DEPARTURE;
-            }
+        if (runtime.arrival_event->clock < runtime.clock_next_departure) {
+            next_event_type = ARRIVAL;
         } else {
             next_event_type = DEPARTURE;
         }
-        
-        printf("%d\n", event_index);
-
-        update_time_avg_stats();
 
         switch (next_event_type) {
             case ARRIVAL:
                 arrive(&runtime);
-                event_index++;
-                if (event_index >= config.source.event_count) {
-                    runtime.arrival_event = nullptr;
+                runtime.arrival_event = next_arrival(runtime.config, runtime.state);
+                if (runtime.arrival_event->packet.t == AUDIO) {
+                    printf("next event: AUDIO, clock: %f\n", runtime.arrival_event->clock);
+                } else if (runtime.arrival_event->packet.t == VIDEO) {
+                    printf("next event: VIDEO, clock: %f\n", runtime.arrival_event->clock);
                 } else {
-                    runtime.arrival_event = &events[event_index];
+                    printf("next event: DATA, clock: %f\n", runtime.arrival_event->clock);
                 }
+
                 break;
             case DEPARTURE:
                 depart(&runtime);
                 break;
         }
+        report();
     }
-
-    /* Invoke the report generator and end the simulation. */
 
     report();
 

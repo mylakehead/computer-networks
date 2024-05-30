@@ -31,9 +31,7 @@ struct Flow {
 };
 
 struct Source {
-    int event_count;
     std::vector<Flow> flows;
-    float lambda; // λ, for Little's Law, the average arrival rate into the queue
 };
 
 struct Config {

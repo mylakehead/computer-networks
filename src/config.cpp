@@ -68,13 +68,6 @@ int parse_config_file(char *config_file, Config *config) {
         return 1;
     }
 
-    std::pair event_count = source->getInt("event_count");
-    if (!event_count.first) {
-        printf("parsing file error: %s\n", "missing or bad [source.event_count] entry");
-        return 1;
-    }
-    config->source.event_count = event_count.second;
-
     auto flows = source->getArray("flows");
     if (!flows) {
         printf("parsing file error: %s\n", "missing or bad [source.flows] entry");

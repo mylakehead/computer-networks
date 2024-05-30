@@ -8,7 +8,6 @@ size = 100 # K, maximum long long: 9223372036854775807
 rate = 364 # μ for Little's formula
 
 [source]
-event_count = 100 # total event count
 
 [[source.flows]]
 type = "AUDIO"
@@ -26,7 +25,7 @@ peak_bit_rate = 384 # kbps
 packet_size = 1000
 [[source.flows]]
 type = "DATA"
-streams = 1 # number of flows
+streams = 2 # number of flows
 mean_on_time = 0.35
 mean_off_time = 0.65
 peak_bit_rate = 256 # kbps
