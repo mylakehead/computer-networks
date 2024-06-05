@@ -14,6 +14,8 @@ void init_queue(Runtime *runtime);
 
 void push(Runtime *runtime, Event *e);
 
+bool empty(Runtime *runtime);
+
 Event *pop(Runtime *runtime);
 
 #endif //COMPUTER_NETWORKS_QUEUE_H

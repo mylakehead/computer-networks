@@ -24,8 +24,6 @@ void initialize(Runtime *runtime) {
 
     runtime->arrival_event = next_arrival(runtime->config, runtime->state);
 
-    runtime->num_generated = 0;
-
     /* system state */
     // simulator clock
     runtime->clock_system = 0.0;
@@ -33,19 +31,26 @@ void initialize(Runtime *runtime) {
     runtime->clock_last_event = 0.0;
 
     // statistical counters
-    runtime->num_delayed = 0;
-    runtime->total_of_delays = 0.0;
-    runtime->area_num_in_q = 0.0;
+    runtime->total_num_arrived_in_system = 0;
+    runtime->total_num_arrived_in_q = 0;
+    runtime->total_num_without_in_q = 0;
+
+    runtime->total_num_dropped_in_q = 0;
+    runtime->total_num_pushed_in_q = 0;
+    runtime->total_area_num_in_q = 0.0;
+
+    runtime->total_num_delayed_in_server = 0;
+    runtime->total_response_delays_in_server = 0.0;
     runtime->area_server_status = 0.0;
 }
 
 
 void update_time_avg_stats(Runtime *runtime) {
-    float clock_between_last_event = runtime->clock_system - runtime->clock_last_event;
+    double clock_between_last_event = runtime->clock_system - runtime->clock_last_event;
     // TODO
-    runtime->area_num_in_q += clock_between_last_event * (float) (runtime->fifo.size());
+    // runtime->area_num_in_q += clock_between_last_event * (double) (runtime->fifo.size());
 
-    runtime->area_server_status += float(runtime->server_status) * clock_between_last_event;
+    runtime->area_server_status += double(runtime->server_status) * clock_between_last_event;
 }
 
 void arrive(Runtime *runtime) {
@@ -53,8 +58,10 @@ void arrive(Runtime *runtime) {
         // since no Event in Q, this Event can be handled immediately
         // and departure clock can be calculated
         runtime->clock_next_departure = cal_departure_clock(runtime->clock_system, runtime->arrival_event->cost);
-        // since server is IDLE, this event will be served without pushing in fifo, update num delayed
-        runtime->num_delayed += 1;
+        // since server is IDLE, this event will be served without pushing in q, update num delayed
+        runtime->total_num_without_in_q++;
+        runtime->total_num_delayed_in_server++;
+        runtime->total_response_delays_in_server += runtime->arrival_event->cost;
         // update server status
         runtime->server_status = BUSY;
     } else {
@@ -65,10 +72,11 @@ void arrive(Runtime *runtime) {
 void depart(Runtime *runtime) {
     Event *arrival_head = pop(runtime);
     if (arrival_head != nullptr) {
-        runtime->num_delayed += 1;
-        float event_delay = runtime->clock_system - arrival_head->clock;
-        runtime->total_of_delays += event_delay;
+        runtime->total_num_delayed_in_server++;
+        runtime->total_response_delays_in_server += runtime->clock_system - arrival_head->clock;
+
         runtime->clock_next_departure = cal_departure_clock(runtime->clock_system, arrival_head->cost);
+        free(arrival_head);
     } else {
         runtime->clock_next_departure = 1.0e+30;
         runtime->server_status = IDLE;
@@ -76,10 +84,77 @@ void depart(Runtime *runtime) {
 }
 
 void report(Runtime *runtime) {
-    float drop_rate = (float) (runtime->num_generated - runtime->num_delayed) / (float) runtime->num_generated;
-    printf("num_generated: %d, num_delayed: %d, drop rate: %f, total_of_delays: %f, area_num_in_q: %f, area_server_status: %f \n",
-           runtime->num_generated, runtime->num_delayed, drop_rate,
-           runtime->total_of_delays, runtime->area_num_in_q, runtime->area_server_status);
+    /*
+     *     std::vector<int> num_arrived_in_sub_spq{};
+    std::vector<int> num_dropped_in_sub_spq{};
+    std::vector<int> num_pushed_in_sub_spq{};
+    std::vector<double> area_num_in_sub_spq{};
+
+    std::vector<int> num_arrived_in_sub_wfq{};
+    std::vector<int> num_dropped_in_sub_wfq{};
+    std::vector<int> num_pushed_in_sub_wfq{};
+    std::vector<double> area_num_in_sub_wfq{};
+
+    double total_area_num_in_q{};
+    double area_server_status{};
+     */
+    switch (runtime->config->queue_type) {
+        case FIFO: {
+            printf("FIFO statistics\n");
+            printf("total customers arrived in system: %d\n", runtime->total_num_arrived_in_system);
+            printf("total customers without in q: %d\n", runtime->total_num_without_in_q);
+            printf("total customers arrived in q: %d\n", runtime->total_num_arrived_in_q);
+            printf("\n");
+            printf("total customers dropped in q: %d\n", runtime->total_num_dropped_in_q);
+            printf("total customers pushed in q: %d\n", runtime->total_num_pushed_in_q);
+            printf("\n");
+            printf("total customers delayed in server: %d\n", runtime->total_num_delayed_in_server);
+            printf("total customers response delays in server: %f\n", runtime->total_response_delays_in_server);
+            break;
+        }
+        case SPQ: {
+            printf("SPQ statistics\n");
+            printf("total customers arrived in system: %d\n", runtime->total_num_arrived_in_system);
+            printf("total customers without in q: %d\n", runtime->total_num_without_in_q);
+            printf("total customers arrived in q: %d\n", runtime->total_num_arrived_in_q);
+            printf("\n");
+            printf("total customers dropped in q: %d\n", runtime->total_num_dropped_in_q);
+            printf("total customers pushed in q: %d\n", runtime->total_num_pushed_in_q);
+            printf("\n");
+            printf("total customers delayed in server: %d\n", runtime->total_num_delayed_in_server);
+            printf("total customers response delays in server: %f\n", runtime->total_response_delays_in_server);
+
+            for (int i = 0; i < runtime->num_arrived_in_sub_spq.size(); i++) {
+                printf("SPQ %d, arrived %d, dropped: %d, pushed: %d, area: %f\n", i + 1,
+                       runtime->num_arrived_in_sub_spq[i],
+                       runtime->num_dropped_in_sub_spq[i],
+                       runtime->num_pushed_in_sub_spq[i],
+                       runtime->area_num_in_sub_spq[i]);
+            }
+            break;
+        }
+        case WFQ: {
+            printf("WFQ statistics\n");
+            printf("total customers arrived in system: %d\n", runtime->total_num_arrived_in_system);
+            printf("total customers without in q: %d\n", runtime->total_num_without_in_q);
+            printf("total customers arrived in q: %d\n", runtime->total_num_arrived_in_q);
+            printf("\n");
+            printf("total customers dropped in q: %d\n", runtime->total_num_dropped_in_q);
+            printf("total customers pushed in q: %d\n", runtime->total_num_pushed_in_q);
+            printf("\n");
+            printf("total customers delayed in server: %d\n", runtime->total_num_delayed_in_server);
+            printf("total customers response delays in server: %f\n", runtime->total_response_delays_in_server);
+
+            for (int i = 0; i < runtime->num_arrived_in_sub_wfq.size(); i++) {
+                printf("WFQ %d, arrived %d, dropped: %d, pushed: %d, area: %f\n", i + 1,
+                       runtime->num_arrived_in_sub_wfq[i],
+                       runtime->num_dropped_in_sub_wfq[i],
+                       runtime->num_pushed_in_sub_wfq[i],
+                       runtime->area_num_in_sub_wfq[i]);
+            }
+            break;
+        }
+    }
 }
 
 
@@ -120,22 +195,25 @@ int main(int argc, char *argv[]) {
     gettimeofday(&tv, nullptr);
     srand(tv.tv_sec ^ tv.tv_usec ^ getpid());
 
-    // TODO init source state
     init_source_state(runtime.config, runtime.state);
 
     init_queue(&runtime);
 
-    // TODO
     initialize(&runtime);
 
-    while (!stop) {
-        if (runtime.arrival_event->clock < runtime.clock_next_departure) {
-            runtime.next_event_type = ARRIVAL;
-            runtime.clock_system = runtime.arrival_event->clock;
-            runtime.num_generated++;
-        } else {
+    while (!stop || !empty(&runtime)) {
+        if (stop) {
             runtime.next_event_type = DEPARTURE;
             runtime.clock_system = runtime.clock_next_departure;
+        } else {
+            if (runtime.arrival_event->clock < runtime.clock_next_departure) {
+                runtime.next_event_type = ARRIVAL;
+                runtime.clock_system = runtime.arrival_event->clock;
+                runtime.total_num_arrived_in_system++;
+            } else {
+                runtime.next_event_type = DEPARTURE;
+                runtime.clock_system = runtime.clock_next_departure;
+            }
         }
 
         update_time_avg_stats(&runtime);
@@ -144,6 +222,21 @@ int main(int argc, char *argv[]) {
             case ARRIVAL:
                 arrive(&runtime);
                 runtime.arrival_event = next_arrival(runtime.config, runtime.state);
+                // TODO remove
+                switch (runtime.arrival_event->packet.t) {
+                    case AUDIO: {
+                        int i = 0;
+                        break;
+                    }
+                    case VIDEO: {
+                        int j = 0;
+                        break;
+                    }
+                    case DATA: {
+                        int t = 0;
+                        break;
+                    }
+                }
                 break;
             case DEPARTURE:
                 depart(&runtime);

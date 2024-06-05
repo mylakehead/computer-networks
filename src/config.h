@@ -24,19 +24,19 @@ struct SPQConfig {
 };
 
 struct WFQConfig {
-    std::vector<float> weights;
+    std::vector<double> weights;
     std::vector<long> sizes;
 };
 
 struct Server {
-    float rate;
+    double rate;
 };
 
 struct Flow {
     PacketType t;
     int streams;
-    float mean_on_time;
-    float mean_off_time;
+    double mean_on_time;
+    double mean_off_time;
     int peak_bit_rate;
     int packet_size;
 };

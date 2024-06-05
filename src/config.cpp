@@ -101,7 +101,7 @@ int parse_config_file(const char *config_file, Config *config) {
                 printf("parsing file error: %s\n", "missing or bad [queue.WFQ.Q.weights] entry");
                 return 1;
             }
-            config->wfq.weights.push_back((float) q_weight.second);
+            config->wfq.weights.push_back((double) q_weight.second);
 
             std::pair q_size = q_table->getInt("size");
             if (!q_size.first) {
@@ -134,7 +134,7 @@ int parse_config_file(const char *config_file, Config *config) {
         printf("parsing file error: %s\n", "missing or bad [server.rate] entry");
         return 1;
     }
-    config->server.rate = (float) (rate.second) * 1000;
+    config->server.rate = (double) (rate.second) * 1000;
 
     // source
     auto source = res.table->getTable("source");
@@ -150,7 +150,7 @@ int parse_config_file(const char *config_file, Config *config) {
     }
 
     // Little's formula
-    float lambda = 0.0;
+    double lambda = 0.0;
 
     for (int i = 0;; i++) {
         auto flow_table = flows->getTable(i);
@@ -187,14 +187,14 @@ int parse_config_file(const char *config_file, Config *config) {
             printf("parsing file error: %s\n", "missing or bad [source.flows.mean_on_time] entry");
             return 1;
         }
-        flow.mean_on_time = (float) flow_mean_on_time.second;
+        flow.mean_on_time = (double) flow_mean_on_time.second;
 
         std::pair flow_mean_off_time = flow_table->getDouble("mean_off_time");
         if (!flow_mean_off_time.first) {
             printf("parsing file error: %s\n", "missing or bad [source.flows.mean_off_time] entry");
             return 1;
         }
-        flow.mean_off_time = (float) flow_mean_off_time.second;
+        flow.mean_off_time = (double) flow_mean_off_time.second;
 
         std::pair flow_peak_bit_rate = flow_table->getInt("peak_bit_rate");
         if (!flow_peak_bit_rate.first) {
@@ -210,8 +210,8 @@ int parse_config_file(const char *config_file, Config *config) {
         }
         flow.packet_size = (int) flow_packet_size.second * 8;
 
-        lambda += (flow.mean_on_time / (flow.mean_on_time + flow.mean_off_time)) * (float) flow.streams *
-                  (float) flow.peak_bit_rate *
+        lambda += (flow.mean_on_time / (flow.mean_on_time + flow.mean_off_time)) * (double) flow.streams *
+                  (double) flow.peak_bit_rate *
                   1000;
 
         config->source.flows.push_back(flow);

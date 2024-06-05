@@ -1,12 +1,3 @@
-[queue]
-activate = "FIFO" # FIFO, SPQ, WFQ
-[queue.FIFO]
-size = 100 # K, maximum long long: 9223372036854775807
-
-[server]
-# transmission capacity of the system (kbits/s) (C)
-rate = 319.033 # μ for Little's formula
-
 [source]
 
 [[source.flows]]
@@ -31,3 +22,14 @@ mean_off_time = 0.65
 peak_bit_rate = 256 # kbps
 packet_size = 583
 
+
+[queue]
+
+activate = "FIFO" # FIFO, SPQ, WFQ
+
+[queue.FIFO]
+size = 9223372036854775807 # K, maximum long long: 9223372036854775807
+
+[server]
+# transmission capacity of the system (kbits/s) (C)
+rate = 319.033 # μ for Little's formula

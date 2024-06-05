@@ -41,14 +41,14 @@ size = 304
 [queue.WFQ]
 [[queue.WFQ.Q]] # AUDIO
 weights = 0.5
-size = 105
+size = 300
 [[queue.WFQ.Q]] # VIDEO
 weights = 0.3
-size = 206
+size = 300
 [[queue.WFQ.Q]] # DATA
 weights = 0.2
-size = 307
+size = 300
 
 [server]
 # transmission capacity of the system (kbits/s) (C)
-rate = 364.61 # μ for Little's formula
+rate = 255.227 # μ for Little's formula

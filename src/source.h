@@ -9,8 +9,8 @@ struct Packet {
 };
 
 struct Event {
-    float clock;
-    float cost;
+    double clock;
+    double cost;
     Packet packet;
 };
 
@@ -24,17 +24,18 @@ enum Status {
 struct StreamState {
     int index;
     Flow flow;
-    float packet_interval;
-    float cost;
+    double packet_interval;
+    double cost;
 
     Status status;
-    float next_on;
-    float next_off;
+    double next_on;
+    double next_off;
     Event *next_arrival;
+    double desired_clock;
 };
 
 struct State {
-    float clock;
+    double clock;
 
     std::vector<StreamState *> stream_states;
 };
