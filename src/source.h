@@ -5,6 +5,7 @@
 
 struct Packet {
     PacketType t;
+    int size;
 };
 
 struct Event {

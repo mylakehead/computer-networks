@@ -12,4 +12,7 @@ add_executable(computer_networks main.cpp
         include/toml.c
         src/config.cpp
         src/config.h
+        src/queue.cpp
+        src/queue.h
+        src/runtime.h
 )

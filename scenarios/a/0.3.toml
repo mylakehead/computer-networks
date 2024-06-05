@@ -5,7 +5,7 @@ size = 100 # K, maximum long long: 9223372036854775807
 
 [server]
 # transmission capacity of the system (kbits/s) (C)
-rate = 850 # μ for Little's formula
+rate = 850.757 # μ for Little's formula
 
 [source]
 

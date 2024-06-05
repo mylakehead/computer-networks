@@ -37,17 +37,19 @@ packet_size = 583
 ```
 
 If the above parameters are fixed, the server_rate can be calculated for the requirement.
-λ = 255227.156250
+λ = 255.227k
 μ = λ / ρ
-For ρ = 0.1, μ = 2552k
-For ρ = 0.2, μ = 1276k
-For ρ = 0.3, μ = 850k
-For ρ = 0.4, μ = 638k
-For ρ = 0.5, μ = 510k
-For ρ = 0.6, μ = 425k
-For ρ = 0.7, μ = 364k
-For ρ = 0.8, μ = 319k
-For ρ = 0.8, μ = 283k
+For ρ = 0.1, μ = 2552.27k
+For ρ = 0.2, μ = 1276.135k
+For ρ = 0.3, μ = 850.757k
+For ρ = 0.4, μ = 638.0675k
+For ρ = 0.5, μ = 510.454k
+For ρ = 0.6, μ = 425.378k
+For ρ = 0.7, μ = 364.61k
+For ρ = 0.8, μ = 319.033k
+For ρ = 0.9, μ = 283.586k
+For ρ = 1.0, μ = 255.227k
+For ρ = 1.1, μ = 232.024k
 
 
 
