@@ -44,15 +44,6 @@ void initialize(Runtime *runtime) {
     runtime->area_server_status = 0.0;
 }
 
-
-void update_time_avg_stats(Runtime *runtime) {
-    double clock_between_last_event = runtime->clock_system - runtime->clock_last_event;
-    // TODO
-    // runtime->area_num_in_q += clock_between_last_event * (double) (runtime->fifo.size());
-
-    runtime->area_server_status += double(runtime->server_status) * clock_between_last_event;
-}
-
 void arrive(Runtime *runtime) {
     if (IDLE == runtime->server_status) {
         // since no Event in Q, this Event can be handled immediately
@@ -83,47 +74,40 @@ void depart(Runtime *runtime) {
     }
 }
 
+void update_time_avg_stats(Runtime *runtime) {
+    double clock_between_last_event = runtime->clock_system - runtime->clock_last_event;
+    switch (runtime->config->queue_type) {
+        case FIFO: {
+            runtime->total_area_num_in_q += clock_between_last_event * (double) (runtime->fifo.size());
+            break;
+        }
+        case SPQ: {
+            for (int i = 0; i < runtime->area_num_in_sub_spq.size(); i++) {
+                runtime->area_num_in_sub_spq[i] += clock_between_last_event * (double) (runtime->spq[i].q.size());
+                runtime->total_area_num_in_q += clock_between_last_event * (double) (runtime->spq[i].q.size());
+            }
+            break;
+        }
+        case WFQ: {
+            for (int i = 0; i < runtime->area_num_in_sub_wfq.size(); i++) {
+                runtime->area_num_in_sub_wfq[i] += clock_between_last_event * (double) (runtime->wfq.subs[i].q.size());
+                runtime->total_area_num_in_q += clock_between_last_event * (double) (runtime->wfq.subs[i].q.size());
+            }
+            break;
+        }
+    }
+
+    runtime->area_server_status += double(runtime->server_status) * clock_between_last_event;
+}
+
 void report(Runtime *runtime) {
-    /*
-     *     std::vector<int> num_arrived_in_sub_spq{};
-    std::vector<int> num_dropped_in_sub_spq{};
-    std::vector<int> num_pushed_in_sub_spq{};
-    std::vector<double> area_num_in_sub_spq{};
-
-    std::vector<int> num_arrived_in_sub_wfq{};
-    std::vector<int> num_dropped_in_sub_wfq{};
-    std::vector<int> num_pushed_in_sub_wfq{};
-    std::vector<double> area_num_in_sub_wfq{};
-
-    double total_area_num_in_q{};
-    double area_server_status{};
-     */
     switch (runtime->config->queue_type) {
         case FIFO: {
             printf("FIFO statistics\n");
-            printf("total customers arrived in system: %d\n", runtime->total_num_arrived_in_system);
-            printf("total customers without in q: %d\n", runtime->total_num_without_in_q);
-            printf("total customers arrived in q: %d\n", runtime->total_num_arrived_in_q);
-            printf("\n");
-            printf("total customers dropped in q: %d\n", runtime->total_num_dropped_in_q);
-            printf("total customers pushed in q: %d\n", runtime->total_num_pushed_in_q);
-            printf("\n");
-            printf("total customers delayed in server: %d\n", runtime->total_num_delayed_in_server);
-            printf("total customers response delays in server: %f\n", runtime->total_response_delays_in_server);
             break;
         }
         case SPQ: {
             printf("SPQ statistics\n");
-            printf("total customers arrived in system: %d\n", runtime->total_num_arrived_in_system);
-            printf("total customers without in q: %d\n", runtime->total_num_without_in_q);
-            printf("total customers arrived in q: %d\n", runtime->total_num_arrived_in_q);
-            printf("\n");
-            printf("total customers dropped in q: %d\n", runtime->total_num_dropped_in_q);
-            printf("total customers pushed in q: %d\n", runtime->total_num_pushed_in_q);
-            printf("\n");
-            printf("total customers delayed in server: %d\n", runtime->total_num_delayed_in_server);
-            printf("total customers response delays in server: %f\n", runtime->total_response_delays_in_server);
-
             for (int i = 0; i < runtime->num_arrived_in_sub_spq.size(); i++) {
                 printf("SPQ %d, arrived %d, dropped: %d, pushed: %d, area: %f\n", i + 1,
                        runtime->num_arrived_in_sub_spq[i],
@@ -135,16 +119,6 @@ void report(Runtime *runtime) {
         }
         case WFQ: {
             printf("WFQ statistics\n");
-            printf("total customers arrived in system: %d\n", runtime->total_num_arrived_in_system);
-            printf("total customers without in q: %d\n", runtime->total_num_without_in_q);
-            printf("total customers arrived in q: %d\n", runtime->total_num_arrived_in_q);
-            printf("\n");
-            printf("total customers dropped in q: %d\n", runtime->total_num_dropped_in_q);
-            printf("total customers pushed in q: %d\n", runtime->total_num_pushed_in_q);
-            printf("\n");
-            printf("total customers delayed in server: %d\n", runtime->total_num_delayed_in_server);
-            printf("total customers response delays in server: %f\n", runtime->total_response_delays_in_server);
-
             for (int i = 0; i < runtime->num_arrived_in_sub_wfq.size(); i++) {
                 printf("WFQ %d, arrived %d, dropped: %d, pushed: %d, area: %f\n", i + 1,
                        runtime->num_arrived_in_sub_wfq[i],
@@ -155,6 +129,26 @@ void report(Runtime *runtime) {
             break;
         }
     }
+    printf("\n");
+    printf("total customers arrived in system: %d\n", runtime->total_num_arrived_in_system);
+    printf("total customers without in q: %d\n", runtime->total_num_without_in_q);
+    printf("total customers arrived in q: %d\n", runtime->total_num_arrived_in_q);
+    printf("total customers dropped in q: %d\n", runtime->total_num_dropped_in_q);
+    printf("total customers pushed in q: %d\n", runtime->total_num_pushed_in_q);
+    printf("total customers delayed in server: %d\n", runtime->total_num_delayed_in_server);
+    printf("total customers response delays in server: %f\n", runtime->total_response_delays_in_server);
+    printf("total area of customers in q: %f\n", runtime->total_area_num_in_q);
+    printf("\n");
+    printf("average queuing delay of customers popped from q: %f\n",
+           runtime->total_area_num_in_q / (double) runtime->total_num_pushed_in_q);
+    printf("average queuing delay of all sent: %f\n",
+           runtime->total_area_num_in_q / (double) runtime->total_num_delayed_in_server);
+    printf("average response time: %f\n",
+           runtime->total_response_delays_in_server / (double) runtime->total_num_delayed_in_server);
+    printf("average packet blocking ratio: %f\n",
+           runtime->total_num_dropped_in_q / (double) runtime->total_num_arrived_in_system);
+    printf("average packet backlogged: %f\n",
+           runtime->total_area_num_in_q / (double) runtime->clock_system); // ?
 }
 
 
