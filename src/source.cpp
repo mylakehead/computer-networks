@@ -20,6 +20,12 @@ void init_source_state(Config *config, State *state) {
             stream_state->packet_interval = 1.0 / peak_packets_per_sec;
             stream_state->cost = stream_state->flow.packet_size / config->server.rate;
 
+            double average_packets_rate = (double) peak_packets_per_sec *
+                                          (config->source.flows[i].mean_on_time /
+                                           (config->source.flows[i].mean_on_time +
+                                            config->source.flows[i].mean_off_time));
+            config->source.theoretical_average_packets_per_second += average_packets_rate;
+
             // runtime states
             stream_state->status = INIT_SOURCE_STATE;
             if (stream_state->status == OFF) {

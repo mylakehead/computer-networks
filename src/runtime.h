@@ -81,7 +81,6 @@ struct Runtime {
     int total_num_pushed_in_q{};
     double total_area_num_in_q{};
 
-
     int total_num_delayed_in_server{};
     double total_response_delays_in_server{};
     double area_server_status{};

@@ -1,0 +1,43 @@
+[source]
+
+[[source.flows]]
+type = "AUDIO"
+streams = 2 # number of flows
+mean_on_time = 0.36
+mean_off_time = 0.64
+peak_bit_rate = 64 # kbps
+packet_size = 120
+[[source.flows]]
+type = "VIDEO"
+streams = 1 # number of flows
+mean_on_time = 0.33
+mean_off_time = 0.73
+peak_bit_rate = 384 # kbps
+packet_size = 1000
+[[source.flows]]
+type = "DATA"
+streams = 1 # number of flows
+mean_on_time = 0.35
+mean_off_time = 0.65
+peak_bit_rate = 256 # kbps
+packet_size = 583
+
+
+[queue]
+
+activate = "WFQ" # FIFO, SPQ, WFQ
+
+[queue.WFQ]
+[[queue.WFQ.Q]] # AUDIO
+weights = 0.5
+size = 100
+[[queue.WFQ.Q]] # VIDEO
+weights = 0.3
+size = 100
+[[queue.WFQ.Q]] # DATA
+weights = 0.2
+size = 100
+
+[server]
+# transmission capacity of the system (kbits/s) (C)
+rate = 1276.135 # μ for Little's formula

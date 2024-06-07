@@ -42,6 +42,7 @@ struct Flow {
 };
 
 struct Source {
+    double theoretical_average_packets_per_second;
     std::vector<Flow> flows;
 };
 

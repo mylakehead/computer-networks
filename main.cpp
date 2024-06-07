@@ -109,37 +109,45 @@ void report(Runtime *runtime) {
         case SPQ: {
             printf("SPQ statistics\n");
             for (int i = 0; i < runtime->num_arrived_in_sub_spq.size(); i++) {
-                printf("SPQ %d, arrived %d, dropped: %d, pushed: %d, area: %f\n", i + 1,
+                printf("SPQ %d, arrived %d, dropped: %d, pushed: %d, area: %f, average queuing delay: %f, average packet backlogged: %f\n",
+                       i + 1,
                        runtime->num_arrived_in_sub_spq[i],
                        runtime->num_dropped_in_sub_spq[i],
                        runtime->num_pushed_in_sub_spq[i],
-                       runtime->area_num_in_sub_spq[i]);
+                       runtime->area_num_in_sub_spq[i],
+                       runtime->area_num_in_sub_spq[i] / (double) runtime->num_pushed_in_sub_spq[i],
+                       runtime->area_num_in_sub_spq[i] / (double) runtime->clock_system
+                );
             }
             break;
         }
         case WFQ: {
             printf("WFQ statistics\n");
             for (int i = 0; i < runtime->num_arrived_in_sub_wfq.size(); i++) {
-                printf("WFQ %d, arrived %d, dropped: %d, pushed: %d, area: %f\n", i + 1,
+                printf("WFQ %d, arrived %d, dropped: %d, pushed: %d, area: %f, average queuing delay: %f, average packet backlogged: %f\n",
+                       i + 1,
                        runtime->num_arrived_in_sub_wfq[i],
                        runtime->num_dropped_in_sub_wfq[i],
                        runtime->num_pushed_in_sub_wfq[i],
-                       runtime->area_num_in_sub_wfq[i]);
+                       runtime->area_num_in_sub_wfq[i],
+                       runtime->area_num_in_sub_wfq[i] / (double) runtime->num_pushed_in_sub_wfq[i],
+                       runtime->area_num_in_sub_wfq[i] / (double) runtime->clock_system
+                );
             }
             break;
         }
     }
     printf("\n");
-    printf("total customers arrived in system: %d\n", runtime->total_num_arrived_in_system);
-    printf("total customers without in q: %d\n", runtime->total_num_without_in_q);
-    printf("total customers arrived in q: %d\n", runtime->total_num_arrived_in_q);
-    printf("total customers dropped in q: %d\n", runtime->total_num_dropped_in_q);
-    printf("total customers pushed in q: %d\n", runtime->total_num_pushed_in_q);
-    printf("total customers delayed in server: %d\n", runtime->total_num_delayed_in_server);
-    printf("total customers response delays in server: %f\n", runtime->total_response_delays_in_server);
-    printf("total area of customers in q: %f\n", runtime->total_area_num_in_q);
+    printf("total packets arrived in system: %d\n", runtime->total_num_arrived_in_system);
+    printf("total packets without in q: %d\n", runtime->total_num_without_in_q);
+    printf("total packets arrived in q: %d\n", runtime->total_num_arrived_in_q);
+    printf("total packets dropped in q: %d\n", runtime->total_num_dropped_in_q);
+    printf("total packets pushed in q: %d\n", runtime->total_num_pushed_in_q);
+    printf("total packets delayed in server: %d\n", runtime->total_num_delayed_in_server);
+    printf("total packets response delays in server: %f\n", runtime->total_response_delays_in_server);
+    printf("total area of packets in q: %f\n", runtime->total_area_num_in_q);
     printf("\n");
-    printf("average queuing delay of customers popped from q: %f\n",
+    printf("average queuing delay of packets popped from q: %f\n",
            runtime->total_area_num_in_q / (double) runtime->total_num_pushed_in_q);
     printf("average queuing delay of all sent: %f\n",
            runtime->total_area_num_in_q / (double) runtime->total_num_delayed_in_server);
@@ -147,8 +155,13 @@ void report(Runtime *runtime) {
            runtime->total_response_delays_in_server / (double) runtime->total_num_delayed_in_server);
     printf("average packet blocking ratio: %f\n",
            runtime->total_num_dropped_in_q / (double) runtime->total_num_arrived_in_system);
-    printf("average packet backlogged: %f\n",
-           runtime->total_area_num_in_q / (double) runtime->clock_system); // ?
+    printf("theoretical average packets backlogged: %f\n",
+           runtime->config->source.theoretical_average_packets_per_second * runtime->total_area_num_in_q /
+           (double) runtime->total_num_delayed_in_server);
+    printf("average packet backlogged: %f\n", runtime->total_area_num_in_q / runtime->clock_system);
+
+    printf("total area server status: %f\n", runtime->area_server_status);
+    printf("average server status: %f\n", runtime->area_server_status / (double) runtime->clock_system);
 }
 
 
@@ -216,21 +229,6 @@ int main(int argc, char *argv[]) {
             case ARRIVAL:
                 arrive(&runtime);
                 runtime.arrival_event = next_arrival(runtime.config, runtime.state);
-                // TODO remove
-                switch (runtime.arrival_event->packet.t) {
-                    case AUDIO: {
-                        int i = 0;
-                        break;
-                    }
-                    case VIDEO: {
-                        int j = 0;
-                        break;
-                    }
-                    case DATA: {
-                        int t = 0;
-                        break;
-                    }
-                }
                 break;
             case DEPARTURE:
                 depart(&runtime);
