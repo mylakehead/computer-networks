@@ -36,3 +36,8 @@ cmake-build-debug/
 CMakeCache.txt
 computer_networks
 CMakeFiles
+.cmake/
+.ninja_deps
+.ninja_log
+Testing/
+build.ninja

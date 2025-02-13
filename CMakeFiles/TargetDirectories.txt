@@ -1,3 +1,0 @@
-/Users/hongkang/github/mylakehead/computer-networks/CMakeFiles/computer_networks.dir
-/Users/hongkang/github/mylakehead/computer-networks/CMakeFiles/edit_cache.dir
-/Users/hongkang/github/mylakehead/computer-networks/CMakeFiles/rebuild_cache.dir
