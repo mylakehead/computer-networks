@@ -8,13 +8,13 @@ set(CMAKE_DEPENDS_LANGUAGES
 
 # The set of dependency files which are needed:
 set(CMAKE_DEPENDS_DEPENDENCY_FILES
-  "/Users/hongkang/github/lake-head/computer-networks/include/toml.c" "CMakeFiles/computer_networks.dir/include/toml.c.o" "gcc" "CMakeFiles/computer_networks.dir/include/toml.c.o.d"
-  "/Users/hongkang/github/lake-head/computer-networks/include/tomlcpp.cpp" "CMakeFiles/computer_networks.dir/include/tomlcpp.cpp.o" "gcc" "CMakeFiles/computer_networks.dir/include/tomlcpp.cpp.o.d"
-  "/Users/hongkang/github/lake-head/computer-networks/main.cpp" "CMakeFiles/computer_networks.dir/main.cpp.o" "gcc" "CMakeFiles/computer_networks.dir/main.cpp.o.d"
-  "/Users/hongkang/github/lake-head/computer-networks/src/config.cpp" "CMakeFiles/computer_networks.dir/src/config.cpp.o" "gcc" "CMakeFiles/computer_networks.dir/src/config.cpp.o.d"
-  "/Users/hongkang/github/lake-head/computer-networks/src/queue.cpp" "CMakeFiles/computer_networks.dir/src/queue.cpp.o" "gcc" "CMakeFiles/computer_networks.dir/src/queue.cpp.o.d"
-  "/Users/hongkang/github/lake-head/computer-networks/src/source.cpp" "CMakeFiles/computer_networks.dir/src/source.cpp.o" "gcc" "CMakeFiles/computer_networks.dir/src/source.cpp.o.d"
-  "/Users/hongkang/github/lake-head/computer-networks/src/utils.cpp" "CMakeFiles/computer_networks.dir/src/utils.cpp.o" "gcc" "CMakeFiles/computer_networks.dir/src/utils.cpp.o.d"
+  "/Users/hongkang/github/mylakehead/computer-networks/include/toml.c" "CMakeFiles/computer_networks.dir/include/toml.c.o" "gcc" "CMakeFiles/computer_networks.dir/include/toml.c.o.d"
+  "/Users/hongkang/github/mylakehead/computer-networks/include/tomlcpp.cpp" "CMakeFiles/computer_networks.dir/include/tomlcpp.cpp.o" "gcc" "CMakeFiles/computer_networks.dir/include/tomlcpp.cpp.o.d"
+  "/Users/hongkang/github/mylakehead/computer-networks/main.cpp" "CMakeFiles/computer_networks.dir/main.cpp.o" "gcc" "CMakeFiles/computer_networks.dir/main.cpp.o.d"
+  "/Users/hongkang/github/mylakehead/computer-networks/src/config.cpp" "CMakeFiles/computer_networks.dir/src/config.cpp.o" "gcc" "CMakeFiles/computer_networks.dir/src/config.cpp.o.d"
+  "/Users/hongkang/github/mylakehead/computer-networks/src/queue.cpp" "CMakeFiles/computer_networks.dir/src/queue.cpp.o" "gcc" "CMakeFiles/computer_networks.dir/src/queue.cpp.o.d"
+  "/Users/hongkang/github/mylakehead/computer-networks/src/source.cpp" "CMakeFiles/computer_networks.dir/src/source.cpp.o" "gcc" "CMakeFiles/computer_networks.dir/src/source.cpp.o.d"
+  "/Users/hongkang/github/mylakehead/computer-networks/src/utils.cpp" "CMakeFiles/computer_networks.dir/src/utils.cpp.o" "gcc" "CMakeFiles/computer_networks.dir/src/utils.cpp.o.d"
   )
 
 # Targets to which this target links which contain Fortran sources.
